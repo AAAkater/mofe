@@ -1,0 +1,7 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "mofe 模型以及后端服务"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
