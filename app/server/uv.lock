@@ -1,0 +1,35 @@
+version = 1
+revision = 2
+requires-python = ">=3.12"
+
+[manifest]
+members = [
+    "backend",
+    "lama",
+    "pconv",
+]
+
+[[package]]
+name = "backend"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "lama" },
+    { name = "pconv" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lama", editable = "../../packages/LaMa" },
+    { name = "pconv", editable = "../../packages/PConv" },
+]
+
+[[package]]
+name = "lama"
+version = "0.1.0"
+source = { editable = "../../packages/LaMa" }
+
+[[package]]
+name = "pconv"
+version = "0.1.0"
+source = { editable = "../../packages/PConv" }

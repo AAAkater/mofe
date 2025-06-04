@@ -4,4 +4,11 @@ version = "0.1.0"
 description = "mofe 模型以及后端服务"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["lama", "pconv"]
+
+[tool.uv.sources]
+lama = { workspace = true }
+pconv = { workspace = true }
+
+[tool.uv.workspace]
+members = ["../../packages/*"]
