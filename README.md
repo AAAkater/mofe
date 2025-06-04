@@ -1,5 +1,10 @@
 # CUIT 工程实践 3
 
-为啥叫 mofe
+## 初始化项目
 
-随机瞎取的名字
+```shell
+cd mofe/app/server
+uv sync
+```
+
+在`package`文件夹下开发你的模型
