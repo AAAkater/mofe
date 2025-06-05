@@ -1,10 +1,26 @@
 # CUIT 工程实践 3
 
-## 初始化项目
+## 1 总览
 
-```shell
-cd mofe/app/server
-uv sync
+```txt
+./
+├── app
+│   ├── desktop         # 客户端
+│   └── web             # 网页端
+├── README.md
+└── server
+    ├── app             # 后端
+    ├── packages        # 模型
+    ├── pyproject.toml
+    ├── README.md
+    ├── scripts         # 启动脚本
+    └── uv.lock
 ```
 
-在`package`文件夹下开发你的模型
+## 2 初始化项目
+
+### 2.1 后端
+
+详见 [后端README.md](./server/README.md)
+
+### 2.2
