@@ -15,7 +15,7 @@ function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br">
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* 左侧内容区域 */}
@@ -70,7 +70,12 @@ function Page() {
                   <img
                     src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=20"
                     alt="原图"
-                    className="w-full h-full object-cover filter blur-sm brightness-75"
+                    style={{
+                      imageRendering: "pixelated",
+                      filter: "blur(1px) contrast(1.1)",
+                      transformOrigin: "center",
+                    }}
+                    className="w-full h-full object-cover"
                   />
                   <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium">
                     原图
@@ -89,14 +94,14 @@ function Page() {
                     alt="修复后"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                     修复后
                   </div>
                 </div>
 
                 {/* 滑动条 */}
                 <div
-                  className="absolute top-0 bottom-0 w-1 bg-white shadow-lg cursor-ew-resize flex items-center justify-center"
+                  className="absolute top-0 bottom-0 w-[1px] bg-white shadow-lg cursor-ew-resize flex items-center justify-center"
                   style={{
                     left: `${sliderPosition}%`,
                     transform: "translateX(-50%)",

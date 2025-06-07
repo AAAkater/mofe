@@ -124,7 +124,7 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
       </div>
 
       {/* 文件上传区域 */}
-      {uploadMode === "file" && (
+      {uploadedImages.length == 0 && uploadMode === "file" && (
         <div
           className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
             dragActive
@@ -170,7 +170,7 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
       )}
 
       {/* URL输入区域 */}
-      {uploadMode === "url" && (
+      {uploadedImages.length == 0 && uploadMode === "url" && (
         <div className="space-y-4">
           <div className="flex space-x-2">
             <input

@@ -50,17 +50,14 @@ const Layout = () => {
   return (
     <div className="w-full max-w-screen bg-white overflow-x-hidden">
       {/* 导航栏 */}
-      <div className="w-full bg-white shadow-sm border-b border-gray-100 fixed">
+      <div className="w-full bg-white border-b border-gray-100 fixed shadow-lg">
         {isMobile ? (
           <div className="flex items-center justify-between px-4 py-4">
-            {/* 佐糖logo */}
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AI</span>
+                <span className="text-white font-bold text-sm">Mofe</span>
               </div>
-              <span className="text-xl font-bold text-gray-800">
-                AI修复神器
-              </span>
+              <span className="text-xl font-bold text-gray-800">Mofe</span>
             </div>
 
             <Button
@@ -85,17 +82,11 @@ const Layout = () => {
             </Drawer>
           </div>
         ) : (
-          <div className="flex items-center justify-between px-6 py-4">
-            {/* 左侧：佐糖logo和导航 */}
+          <div className="flex items-center justify-between px-6 py-4 ">
             <div className="flex items-center space-x-8">
-              {/* 佐糖logo */}
               <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">AI</span>
-                </div>
-                <span className="text-2xl font-bold text-gray-800">
-                  AI修复神器
-                </span>
+                <div className="scale-150">✨</div>
+                <span className="text-2xl font-bold text-gray-800">Mofe</span>
               </div>
 
               {/* 导航菜单 */}
