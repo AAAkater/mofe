@@ -54,7 +54,7 @@ function Page() {
             {/* 按钮组 */}
             <div className="space-y-4">
               <button
-                className="w-full max-w-sm bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white font-semibold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center space-x-3"
+                className="w-full max-w-sm bg-gradient-to-r bg-blue-600   text-white font-semibold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center space-x-3"
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
                 onClick={() => setIsModalOpen(true)}
@@ -257,57 +257,86 @@ function Page() {
             </div>
           </div>
 
-          {/* 用户评价 */}
+          {/* 技术架构展示 */}
           <div className="bg-gray-50 rounded-2xl p-8 mb-16">
             <h3 className="text-2xl font-bold text-center text-gray-800 mb-8">
-              用户真实评价
+              核心技术架构
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                    张
+                  <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <svg
+                      className="w-7 h-7 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                  <div className="ml-3">
-                    <div className="font-semibold text-gray-800">张小明</div>
-                    <div className="text-sm text-gray-600">摄影师</div>
+                  <div className="ml-4">
+                    <div className="font-semibold text-gray-800">
+                      深度卷积网络
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      CNN Architecture
+                    </div>
                   </div>
                 </div>
-                <div className="flex text-yellow-400 mb-2">★★★★★</div>
                 <p className="text-gray-600 text-sm">
-                  "修复效果太棒了！以前模糊的老照片现在清晰如新，操作简单快捷，强烈推荐！"
+                  采用ResNet-50作为主干网络，结合空洞卷积和跳跃连接，有效提取图像特征并保持细节信息完整性。
                 </p>
               </div>
 
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                    李
+                  <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <svg
+                      className="w-7 h-7 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                   </div>
-                  <div className="ml-3">
-                    <div className="font-semibold text-gray-800">李设计师</div>
-                    <div className="text-sm text-gray-600">平面设计师</div>
+                  <div className="ml-4">
+                    <div className="font-semibold text-gray-800">
+                      生成对抗网络
+                    </div>
+                    <div className="text-sm text-gray-600">GAN Framework</div>
                   </div>
                 </div>
-                <div className="flex text-yellow-400 mb-2">★★★★★</div>
                 <p className="text-gray-600 text-sm">
-                  "作为设计师，这个工具帮我节省了大量时间，AI修复效果专业，客户都很满意！"
+                  基于ESRGAN架构，通过对抗训练机制生成高质量图像纹理，有效解决传统方法产生的模糊和伪影问题。
                 </p>
               </div>
 
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
-                    王
+                  <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                    <svg
+                      className="w-7 h-7 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
                   </div>
-                  <div className="ml-3">
-                    <div className="font-semibold text-gray-800">王女士</div>
-                    <div className="text-sm text-gray-600">普通用户</div>
+                  <div className="ml-4">
+                    <div className="font-semibold text-gray-800">
+                      多尺度融合
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Multi-Scale Fusion
+                    </div>
                   </div>
                 </div>
-                <div className="flex text-yellow-400 mb-2">★★★★★</div>
                 <p className="text-gray-600 text-sm">
-                  "家里的老照片终于可以变清晰了，操作很简单，连我这样的新手都能轻松使用！"
+                  通过金字塔结构处理不同尺度的图像信息，结合注意力机制自适应融合局部细节与全局结构特征。
                 </p>
               </div>
             </div>
