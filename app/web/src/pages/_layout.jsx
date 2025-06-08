@@ -2,6 +2,7 @@ import { Menu, Drawer, Button } from "@arco-design/web-react";
 import { IconMenu, IconDown } from "@arco-design/web-react/icon";
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
+import HistoryModal from "../components/HistoryModal";
 
 const MenuItem = Menu.Item;
 const SubMenu = Menu.SubMenu;
@@ -9,6 +10,7 @@ const SubMenu = Menu.SubMenu;
 const Layout = () => {
   const [visible, setVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
   const menuItems = [
     {
@@ -31,6 +33,13 @@ const Layout = () => {
     };
   }, []);
 
+  const handleMenuClick = (key) => {
+    if (key === "history") {
+      setHistoryModalOpen(true);
+      setVisible(false); // 关闭移动端菜单
+    }
+  };
+
   // 移动端菜单内容
   const mobileMenuContent = (
     <div className="py-6">
@@ -39,7 +48,11 @@ const Layout = () => {
       </div>
       <Menu mode="vertical" style={{ border: "none", width: "100%" }}>
         {menuItems.map((item) => (
-          <MenuItem key={item.key} className="text-lg py-3">
+          <MenuItem
+            key={item.key}
+            className="text-lg py-3"
+            onClick={() => handleMenuClick(item.key)}
+          >
             {item.label}
           </MenuItem>
         ))}
@@ -93,7 +106,10 @@ const Layout = () => {
               <div className="flex items-center space-x-6">
                 {menuItems.map((item) => (
                   <div key={item.key} className="relative group">
-                    <button className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 font-medium transition-colors duration-200">
+                    <button
+                      onClick={() => handleMenuClick(item.key)}
+                      className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 font-medium transition-colors duration-200"
+                    >
                       <span>{item.label}</span>
                       {item.hasDrcopdown && (
                         <IconDown className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
@@ -129,9 +145,15 @@ const Layout = () => {
       </div>
 
       {/* 主要内容区域 */}
-      <div className="w-full h-full overflow-auto pt-10">
+      <div className="w-full h-full overflow-auto pt-10 mx-auto">
         <Outlet />
       </div>
+
+      {/* 历史修复Modal */}
+      <HistoryModal
+        isOpen={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+      />
     </div>
   );
 };
