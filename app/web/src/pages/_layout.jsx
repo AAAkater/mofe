@@ -63,7 +63,7 @@ const Layout = () => {
   return (
     <div className="w-full max-w-screen bg-white overflow-x-hidden">
       {/* 导航栏 */}
-      <div className="w-full bg-white border-b border-gray-100 fixed shadow-lg">
+      <div className="w-full bg-white border-b border-gray-100 fixed shadow-lg z-40">
         {isMobile ? (
           <div className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center space-x-2">

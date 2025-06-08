@@ -15,49 +15,69 @@ function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* 左侧内容区域 */}
           <div className="space-y-8">
             <div className="space-y-6">
-              <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                AI修复神器
+              <div className="inline-block">
+                <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-medium mb-4 inline-block">
+                  🎓 工程实践项目
+                </span>
+              </div>
+              <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                智能图像修复系统
               </h1>
-              <h2 className="text-2xl lg:text-3xl font-semibold text-gray-800">
-                一键照片修复
+              <h2 className="text-2xl lg:text-3xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">
+                基于深度学习的图像增强技术
               </h2>
               <p className="text-lg text-gray-600 leading-relaxed max-w-md">
-                利用先进的智能修复模糊图片技术，只需一键操作，无需等待，即刻体验模糊照片变清晰，重现美好瞬间。
+                采用先进的卷积神经网络和生成对抗网络，实现模糊图像的智能修复。支持多种图像格式，提供实时处理和批量操作功能。
               </p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  CNN
+                </span>
+                <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                  GAN
+                </span>
+                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                  超分辨率
+                </span>
+                <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
+                  图像去噪
+                </span>
+              </div>
             </div>
 
             {/* 按钮组 */}
-            <div className="">
+            <div className="space-y-4">
               <button
-                className="w-full max-w-sm bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center space-x-3"
+                className="w-full max-w-sm bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white font-semibold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center space-x-3"
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
                 onClick={() => setIsModalOpen(true)}
               >
                 <FaUpload className="text-lg" />
                 <div className="text-left">
-                  <div className="text-lg">上传图片</div>
-                  <div className="text-sm opacity-90">
-                    可传入文件、粘贴图片或URL
-                  </div>
+                  <div className="text-lg">开始体验</div>
+                  <div className="text-sm opacity-90">上传图片测试算法效果</div>
                 </div>
                 <FaArrowRight
                   className={`text-lg transition-transform duration-300 ${
-                    isHovering ? "translate-x-1" : ""
+                    isHovering ? "translate-x-2" : ""
                   }`}
                 />
               </button>
+              <div className="text-sm text-gray-500 max-w-sm">
+                💡 支持 JPG、PNG、WebP 格式，最大 10MB
+              </div>
             </div>
           </div>
 
           {/* 右侧图片对比区域 */}
-          <div className="relative">
+          <div className="relative ">
             <div className="relative w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
               {/* 对比图片容器 */}
               <div
