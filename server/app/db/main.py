@@ -23,10 +23,10 @@ async def init_postgres() -> bool:
 async def init_minio() -> bool:
     """Initialize MinIO storage"""
     try:
-        minio_client = MinioClient()
-        # Test connection by creating a test bucket
         test_bucket = "system-test"
-        minio_client.create_bucket(test_bucket)
+        minio_client = MinioClient(test_bucket)
+        # Test connection by creating a test bucket
+        minio_client.create_bucket()
         return True
     except Exception as e:
         logger.error(f"MinIO initialization failed: {e}")
