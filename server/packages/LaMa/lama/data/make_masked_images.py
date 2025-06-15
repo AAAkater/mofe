@@ -1,3 +1,6 @@
+import os
+from glob import glob
+
 import cv2
 import numpy as np
 
@@ -27,7 +30,7 @@ def create_corrupted_image(
     # 调整掩码尺寸
 
     # 合成破损图片 - 直接使用mask_float，不再使用(1 - mask_float)
-    mask_float = (binary_mask.astype(np.float32) / 255.0)[:, :, np.newaxis]
+    mask_float = 1 - (binary_mask.astype(np.float32) / 255.0)[:, :, np.newaxis]
     corrupted_img = original_img * mask_float  # 修改这里，直接使用mask_float
 
     # 保存结果
@@ -39,8 +42,59 @@ def create_corrupted_image(
     return corrupted_img
 
 
+def process_dataset(
+    original_root: str, mask_root: str, output_root: str, max_images=10000
+):
+    """
+    处理整个数据集
+    Args:
+        original_root: 原始图片根目录 (./imagenet100)
+        mask_root: mask图片目录 (./mask/testing_mask_dataset)
+        output_root: 输出目录
+    """
+    # 获取所有原始图片路径
+    original_images = []
+    for root, dirs, files in os.walk(original_root):
+        for file in files:
+            if file.lower().endswith((".png", ".jpg", ".jpeg")):
+                original_images.append(os.path.join(root, file))
+        if len(original_images) >= max_images:
+            break
+
+    # 获取所有mask图片路径
+    mask_images = sorted(glob(os.path.join(mask_root, "*.png")))
+    if not mask_images:
+        raise ValueError(f"No mask images found in {mask_root}")
+
+    # 确保输出目录存在
+    os.makedirs(output_root, exist_ok=True)
+
+    # 处理每张原始图片
+    for i, original_path in enumerate(original_images):
+        # 循环使用mask图片
+        mask_path = mask_images[i % len(mask_images)]
+
+        # 创建相对路径结构
+        rel_path = os.path.relpath(original_path, original_root)
+        output_path = os.path.join(output_root, rel_path)
+
+        # 确保输出目录存在
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        # 创建破损图片
+        create_corrupted_image(original_path, mask_path, output_path)
+
+        if (i + 1) % 100 == 0:
+            print(f"Processed {i + 1}/{len(original_images)} images")
+
+
 if __name__ == "__main__":
-    # 使用示例
-    org_path = "./cuit图标.jpg"
-    mask_path = "./irregular_mask/disocclusion_img_mask/00124.png"
-    create_corrupted_image(org_path, mask_path, "./corrupted.png")
+    # 配置路径
+    original_root = "/root/autodl-tmp/imagenet100"
+    mask_root = "/root/autodl-tmp/mask/testing_mask_dataset"
+    output_root = "/root/autodl-tmp/masked_images"
+
+    # 处理数据集
+    print("Starting dataset processing...")
+    process_dataset(original_root, mask_root, output_root)
+    print("Dataset processing completed!")
