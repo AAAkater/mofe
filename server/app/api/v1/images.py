@@ -1,49 +1,53 @@
 import uuid
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from app.core.config import settings
 from app.db.minio import minio_client
 from app.models.response import FileItem, ResponseBase
+from app.utils.logger import logger
 
 router = APIRouter(tags=["images"])
 
 
-@router.post("/upload/images")
-async def upload_images(files: list[UploadFile] = File(...)):
-    uploaded_file_infos: list[FileItem] = []
-    errors = []
+@router.post(
+    path="/upload/image",
+    summary="上传图片文件",
+)
+async def upload_image(file: UploadFile = File(...)) -> ResponseBase[FileItem]:
+    if not file.content_type or not file.filename:
+        logger.error(f"无效文件:{file.content_type=},{file.filename}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="无效文件"
+        )
 
-    for file in files:
-        if not file.content_type or not file.filename:
-            continue
+    if not file.content_type.startswith("image/"):
+        logger.error(f"非图片格式:{file.filename}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="请上传图片文件"
+        )
+    # 存入minio
+    try:
+        file_extension = file.filename.split(".")[-1]
+        file_id = uuid.uuid4()
+        unique_filename = f"{file_id}.{file_extension}"
 
-        if not file.content_type.startswith("image/"):
-            errors.append(f"{file.filename} 不是图片文件")
-            continue
+        content = await file.read()
 
-        try:
-            file_extension = file.filename.split(".")[-1]
-            file_id = uuid.uuid4()
-            unique_filename = f"{file_id}.{file_extension}"
+        minio_client.upload_file(object_name=unique_filename, file_data=content)
 
-            content = await file.read()
-
-            minio_client.upload_file(
-                object_name=unique_filename, file_data=content
+        return ResponseBase[FileItem](
+            data=FileItem(
+                id=file_id,
+                filename=unique_filename,
+                bucket=settings.MINIO_BUCKET_NAME,
             )
-
-            uploaded_file_infos.append(
-                FileItem(
-                    id=file_id,
-                    filename=unique_filename,
-                    bucket=settings.MINIO_BUCKET_NAME,
-                )
-            )
-
-        except Exception as e:
-            errors.append(f"上传 {file.filename} 失败: {str(e)}")
-        finally:
-            await file.close()
-
-    return ResponseBase[list[FileItem]](data=uploaded_file_infos)
+        )
+    except Exception as e:
+        logger.error(f"存储文件失败:\n{e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="存储文件失败",
+        )
+    finally:
+        await file.close()
