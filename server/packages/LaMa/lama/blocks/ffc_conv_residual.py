@@ -10,10 +10,9 @@ class FFCConvResidual(nn.Module):
         # definition of layers
         self.conv = FFC(in_channels, global_percent, experiment)
 
+    def forward(self, x: Tensor):
+        x_ffc: Tensor = self.conv(x)
+        x_ffc: Tensor = self.conv(x_ffc)
+        x = x + x_ffc
 
-def forward(self, x: Tensor):
-    x_ffc: Tensor = self.conv(x)
-    x_ffc: Tensor = self.conv(x_ffc)
-    x = x + x_ffc
-
-    return x
+        return x
