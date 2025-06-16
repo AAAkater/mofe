@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { FaUpload, FaImage, FaLink, FaTimes } from "react-icons/fa";
-import { uploadImage, uploadImageByUrl } from "../service/upload";
+import { uploadImage } from "../service/index.js";
 
 const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -32,41 +32,35 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
   };
 
   const handleFiles = async (files) => {
-    const newImages = [];
+    if (uploadedImages.length + files.length > maxFiles) {
+      alert(`最多只能上传 ${maxFiles} 张图片`);
+      return;
+    }
+
     setUploading(true);
     try {
-      for (const file of Array.from(files).slice(0, maxFiles)) {
-        if (file.type.startsWith("image/")) {
-          // 创建本地预览
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const previewUrl = e.target.result;
-            // 上传文件
-            uploadImage(file)
-              .then((response) => {
-                const imageData = {
-                  id: Date.now() + Math.random(),
-                  file: file,
-                  preview: previewUrl,
-                  name: file.name,
-                  size: file.size,
-                  url: response.url, // 服务器返回的URL
-                };
-                newImages.push(imageData);
-                setUploadedImages((prev) => {
-                  const updated = [...prev, imageData].slice(0, maxFiles);
-                  onImageUpload && onImageUpload(updated);
-                  return updated;
-                });
-              })
-              .catch((error) => {
-                console.error("上传失败:", error);
-                // 这里可以添加错误提示UI
-              });
-          };
-          reader.readAsDataURL(file);
-        }
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const response = await uploadImage(formData);
+
+        const newImage = {
+          id: response.data.file_id,
+          name: file.name,
+          size: file.size,
+          preview: URL.createObjectURL(file),
+          url: response.data.url,
+        };
+
+        setUploadedImages((prev) => {
+          const updated = [...prev, newImage];
+          onImageUpload && onImageUpload(updated);
+          return updated;
+        });
       }
+    } catch (error) {
+      console.error("上传失败:", error);
     } finally {
       setUploading(false);
     }
@@ -80,29 +74,37 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
   };
 
   const handleUrlSubmit = async () => {
-    if (urlInput.trim()) {
-      setUploading(true);
-      try {
-        const response = await uploadImageByUrl(urlInput.trim());
-        const imageData = {
-          id: Date.now(),
-          url: response.url,
-          preview: response.url,
-          name: "URL图片",
-          isUrl: true,
-        };
-        setUploadedImages((prev) => {
-          const updated = [...prev, imageData].slice(0, maxFiles);
-          onImageUpload && onImageUpload(updated);
-          return updated;
-        });
-        setUrlInput("");
-      } catch (error) {
-        console.error("URL上传失败:", error);
-        // 这里可以添加错误提示UI
-      } finally {
-        setUploading(false);
-      }
+    if (uploadedImages.length >= maxFiles) {
+      alert(`最多只能上传 ${maxFiles} 张图片`);
+      return;
+    }
+
+    if (!urlInput.trim()) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("url", urlInput);
+
+      const response = await uploadImage(formData);
+
+      const newImage = {
+        id: response.data.file_id,
+        name: urlInput.split("/").pop() || "未命名图片",
+        url: response.data.url,
+      };
+
+      setUploadedImages((prev) => {
+        const updated = [...prev, newImage];
+        onImageUpload && onImageUpload(updated);
+        return updated;
+      });
+
+      setUrlInput("");
+    } catch (error) {
+      console.error("URL上传失败:", error);
+    } finally {
+      setUploading(false);
     }
   };
 

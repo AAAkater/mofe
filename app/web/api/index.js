@@ -2,7 +2,7 @@ import axios from "axios";
 import { toast } from "sonner";
 
 export const $axios = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: "http://127.0.0.1:4523/m1/6582539-6288036-default",
   timeout: 5000,
 });
 
