@@ -1,84 +1,10 @@
 import os
-import random
-from pathlib import Path
 
+import torch
 import torchvision.transforms as T
 from PIL import Image
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm
-
-from lama.data.make_masked_images import create_corrupted_image
-
-
-def create_dataset(
-    original_dir: str,
-    mask_dir: str,
-    output_dir: str,
-    num_samples: int | None = None,
-    random_pair: bool = True,
-):
-    """
-    创建用于图像修复训练的数据集
-    Args:
-        original_dir: 原始图片文件夹路径
-        mask_dir: mask图片文件夹路径
-        output_dir: 输出文件夹路径
-        num_samples: 需要生成的样本数量,None表示处理所有图片
-        random_pair: 是否随机配对原图和mask
-    """
-    # 确保输出目录存在
-    os.makedirs(output_dir, exist_ok=True)
-
-    # 获取所有图片和mask文件列表
-    original_files = [
-        f
-        for f in os.listdir(original_dir)
-        if f.lower().endswith((".png", ".jpg", ".jpeg"))
-    ]
-    mask_files = [
-        f
-        for f in os.listdir(mask_dir)
-        if f.lower().endswith((".png", ".jpg", ".jpeg"))
-    ]
-
-    # 如果指定了样本数量，随机选择对应数量的原始图片
-    if num_samples is not None:
-        num_samples = min(num_samples, len(original_files))
-        original_files = random.sample(original_files, num_samples)
-
-    print(
-        f"Found {len(original_files)} original images and {len(mask_files)} masks"
-    )
-
-    # 处理每张图片
-    for idx, orig_file in enumerate(
-        tqdm(original_files, desc="Creating dataset")
-    ):
-        # 获取对应的mask文件
-        if random_pair:
-            # 随机选择一个mask
-            mask_file = random.choice(mask_files)
-        else:
-            # 使用相同索引的mask（如果存在）
-            mask_file = mask_files[idx % len(mask_files)]
-
-        # 构建完整路径
-        orig_path = os.path.join(original_dir, orig_file)
-        mask_path = os.path.join(mask_dir, mask_file)
-
-        # 构建输出文件名
-        output_name = (
-            f"{Path(orig_file).stem}_masked_{Path(mask_file).stem}.png"
-        )
-        output_path = os.path.join(output_dir, output_name)
-
-        try:
-            # 创建破损图片
-            create_corrupted_image(orig_path, mask_path, output_path)
-        except Exception as e:
-            print(f"Error processing {orig_file} with {mask_file}: {str(e)}")
-            continue
 
 
 class LamaDataset(Dataset):
@@ -87,92 +13,106 @@ class LamaDataset(Dataset):
         original_dir: str,
         mask_dir: str,
         image_size: tuple[int, int] = (256, 256),
-        transform: T.Compose | None = None,
     ):
         """
-        LaMa数据集
-        Args:
-            original_dir: 原始图片文件夹路径
-            mask_dir: mask图片文件夹路径
-            image_size: 调整图片大小 (height, width)
-            transform: 自定义的转换操作
+        参数说明:
+            original_dir: 存放原始图片的目录路径
+            mask_dir: 存放掩码图片的目录路径（二值化掩码，1表示需要修复的区域）
+            image_size: 图片调整尺寸 (高度, 宽度)
+            transform: 自定义的数据增强变换组合
         """
         self.original_dir = original_dir
         self.mask_dir = mask_dir
         self.image_size = image_size
 
-        # 获取所有图片和mask文件列表
+        # 获取所有原始图片
         self.original_files = [
             f
             for f in os.listdir(original_dir)
             if f.lower().endswith((".png", ".jpg", ".jpeg"))
         ]
+
+        if not self.original_files:
+            raise ValueError("错误: 在原始图片目录中未找到有效的图片文件")
+
+        # 获取所有掩码图片
         self.mask_files = [
             f
             for f in os.listdir(mask_dir)
             if f.lower().endswith((".png", ".jpg", ".jpeg"))
         ]
 
-        # 默认转换操作
-        if transform is None:
-            self.transform = T.Compose(
-                [
-                    T.Resize(image_size),
-                    T.ToTensor(),
-                    T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-                ]
-            )
-        else:
-            self.transform = transform
+        if not self.mask_files:
+            raise ValueError("错误: 在掩码目录中未找到有效的图片文件")
 
-        self.mask_transform = T.Compose([T.Resize(image_size), T.ToTensor()])
+        # 原始图像转换流程
+        self.original_transform = T.Compose(
+            [
+                T.Resize(image_size),
+                T.ToTensor(),
+                T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+            ]
+        )
 
-    def __len__(self) -> int:
+        # 掩码图像转换流程（保持单通道）
+        self.mask_transform = T.Compose(
+            [
+                T.Resize(image_size),
+                T.ToTensor(),
+            ]
+        )
+
+    def __len__(self):
+        """返回数据集样本数量"""
         return len(self.original_files)
 
-    def __getitem__(self, idx: int) -> tuple[Tensor, Tensor, Tensor]:
-        # 获取原始图片路径
-        orig_path = os.path.join(self.original_dir, self.original_files[idx])
+    def __getitem__(self, idx: int):
+        """获取单个样本数据"""
+        original_filename = self.original_files[idx]
+        # 循环使用掩码图片
+        mask_filename = self.mask_files[idx % len(self.mask_files)]
 
-        # 随机选择一个mask
-        mask_file = random.choice(self.mask_files)
-        mask_path = os.path.join(self.mask_dir, mask_file)
+        # 加载原始图像（RGB三通道）
+        original_path = os.path.join(self.original_dir, original_filename)
+        original_img = Image.open(original_path).convert("RGB")
 
-        # 加载图片
-        original_img = Image.open(orig_path).convert("RGB")
+        # 加载掩码图像（灰度单通道）
+        mask_path = os.path.join(self.mask_dir, mask_filename)
         mask = Image.open(mask_path).convert("L")
 
-        # 应用转换
-        original_img = self.transform(original_img)
+        # 应用不同的数据变换
+        original_img = self.original_transform(original_img)
         mask = self.mask_transform(mask)
 
-        # 创建破损图片
-        corrupted_img = original_img * mask
+        # 将掩码二值化（>0.5的值设为1，其余为0）
+        mask = (mask > 0.5).float()
 
+        # 生成破损图像：原始图像 * (1 - 掩码)
+        # 注意：这里需要确保mask的形状与original_img匹配
+        # 通过unsqueeze(0)和expand_as来广播mask的形状
+        # mask = mask.expand_as(original_img)
+        corrupted_img = original_img * (1 - mask)
+
+        # 返回模型训练所需的三要素：
+        # 1. 带缺失区域的破损图像
+        # 2. 缺失区域标识掩码（1=缺失，0=保留）
+        # 3. 原始完整图像（用于计算损失）
         return corrupted_img, mask, original_img
 
 
-# 在文件末尾添加使用示例
+# 使用示例
 if __name__ == "__main__":
     # 数据集参数
-    original_dir = "path/to/original/images"
-    mask_dir = "path/to/mask/images"
-    batch_size = 8
+    original_dir = "/root/autodl-tmp/imagenet100/n01729322"
+    mask_dir = "/root/autodl-tmp/mask/testing_mask_dataset"
+    batch_size = 128
     num_workers = 4
-    output_dir = "path/to/output/dataset"
-
-    # 创建1000张图片的数据集，随机配对原图和mask
-    create_dataset(
-        original_dir=original_dir,
-        mask_dir=mask_dir,
-        output_dir=output_dir,
-        num_samples=1000,
-        random_pair=True,
-    )
 
     # 创建数据集和数据加载器
     dataset = LamaDataset(
-        original_dir=original_dir, mask_dir=mask_dir, image_size=(256, 256)
+        original_dir=original_dir,
+        mask_dir=mask_dir,
+        image_size=(256, 256),
     )
 
     dataloader = DataLoader(
@@ -182,11 +122,10 @@ if __name__ == "__main__":
         num_workers=num_workers,
         pin_memory=True,
     )
-
     # 使用示例
     for corrupted_imgs, masks, original_imgs in dataloader:
         print("Batch shapes:")
+        print(f"{masks.shape=}")
         print(f"Corrupted images: {corrupted_imgs.shape}")
-        print(f"Masks: {masks.shape}")
         print(f"Original images: {original_imgs.shape}")
         break

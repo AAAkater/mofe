@@ -89,20 +89,19 @@ class Trainer:
 def main():
     # 训练参数
     num_epochs = 100
-    batch_size = 8
+    batch_size = 64
     learning_rate = 2e-4
-    image_size = (256, 256)
     save_interval = 10
 
-    # 数据集路径
-    original_dir = "path/to/original/images"
-    mask_dir = "path/to/mask/images"
+    original_dir = "/root/autodl-tmp/imagenet100/n01729322"
+    mask_dir = "/root/autodl-tmp/mask/testing_mask_dataset"
 
     # 创建数据集和数据加载器
     dataset = LamaDataset(
-        original_dir=original_dir, mask_dir=mask_dir, image_size=image_size
+        original_dir=original_dir,
+        mask_dir=mask_dir,
+        image_size=(256, 256),
     )
-
     train_loader = DataLoader(
         dataset,
         batch_size=batch_size,

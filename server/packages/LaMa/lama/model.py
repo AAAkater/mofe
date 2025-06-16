@@ -28,7 +28,7 @@ class Lama(nn.Module):
         ffc_n: int = 9,
         global_ratio: float = 0.6,
     ) -> None:
-        super(Lama).__init__()
+        super().__init__()
 
         # 编码器
         self.encoder = nn.Sequential(
