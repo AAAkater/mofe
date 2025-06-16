@@ -1,11 +1,13 @@
 import { useState, useRef } from "react";
 import { FaUpload, FaImage, FaLink, FaTimes } from "react-icons/fa";
+import { uploadImage, uploadImageByUrl } from "../service/upload";
 
 const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadMode, setUploadMode] = useState("file"); // 'file', 'url'
   const [urlInput, setUrlInput] = useState("");
   const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDrag = (e) => {
@@ -29,31 +31,45 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
     }
   };
 
-  const handleFiles = (files) => {
+  const handleFiles = async (files) => {
     const newImages = [];
-    Array.from(files)
-      .slice(0, maxFiles)
-      .forEach((file) => {
+    setUploading(true);
+    try {
+      for (const file of Array.from(files).slice(0, maxFiles)) {
         if (file.type.startsWith("image/")) {
+          // 创建本地预览
           const reader = new FileReader();
           reader.onload = (e) => {
-            const imageData = {
-              id: Date.now() + Math.random(),
-              file: file,
-              preview: e.target.result,
-              name: file.name,
-              size: file.size,
-            };
-            newImages.push(imageData);
-            setUploadedImages((prev) => {
-              const updated = [...prev, imageData].slice(0, maxFiles);
-              onImageUpload && onImageUpload(updated);
-              return updated;
-            });
+            const previewUrl = e.target.result;
+            // 上传文件
+            uploadImage(file)
+              .then((response) => {
+                const imageData = {
+                  id: Date.now() + Math.random(),
+                  file: file,
+                  preview: previewUrl,
+                  name: file.name,
+                  size: file.size,
+                  url: response.url, // 服务器返回的URL
+                };
+                newImages.push(imageData);
+                setUploadedImages((prev) => {
+                  const updated = [...prev, imageData].slice(0, maxFiles);
+                  onImageUpload && onImageUpload(updated);
+                  return updated;
+                });
+              })
+              .catch((error) => {
+                console.error("上传失败:", error);
+                // 这里可以添加错误提示UI
+              });
           };
           reader.readAsDataURL(file);
         }
-      });
+      }
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleFileInput = (e) => {
@@ -63,21 +79,30 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
     }
   };
 
-  const handleUrlSubmit = () => {
+  const handleUrlSubmit = async () => {
     if (urlInput.trim()) {
-      const imageData = {
-        id: Date.now(),
-        url: urlInput.trim(),
-        preview: urlInput.trim(),
-        name: "URL图片",
-        isUrl: true,
-      };
-      setUploadedImages((prev) => {
-        const updated = [...prev, imageData].slice(0, maxFiles);
-        onImageUpload && onImageUpload(updated);
-        return updated;
-      });
-      setUrlInput("");
+      setUploading(true);
+      try {
+        const response = await uploadImageByUrl(urlInput.trim());
+        const imageData = {
+          id: Date.now(),
+          url: response.url,
+          preview: response.url,
+          name: "URL图片",
+          isUrl: true,
+        };
+        setUploadedImages((prev) => {
+          const updated = [...prev, imageData].slice(0, maxFiles);
+          onImageUpload && onImageUpload(updated);
+          return updated;
+        });
+        setUrlInput("");
+      } catch (error) {
+        console.error("URL上传失败:", error);
+        // 这里可以添加错误提示UI
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
@@ -100,22 +125,24 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
         <div className="bg-gray-100 rounded-lg p-1 flex">
           <button
             onClick={() => setUploadMode("file")}
+            disabled={uploading}
             className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
               uploadMode === "file"
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-gray-600 hover:text-blue-600"
-            }`}
+            } ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <FaImage className="inline mr-2" />
             文件上传
           </button>
           <button
             onClick={() => setUploadMode("url")}
+            disabled={uploading}
             className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
               uploadMode === "url"
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-gray-600 hover:text-blue-600"
-            }`}
+            } ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <FaLink className="inline mr-2" />
             URL输入
@@ -130,7 +157,7 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
             dragActive
               ? "border-blue-500 bg-blue-50"
               : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
-          }`}
+          } ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -142,23 +169,35 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
             multiple={maxFiles > 1}
             accept="image/*"
             onChange={handleFileInput}
+            disabled={uploading}
             className="hidden"
           />
 
           <div className="space-y-4">
             <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
-              <FaUpload className="text-2xl text-blue-600" />
+              <FaUpload
+                className={`text-2xl text-blue-600 ${
+                  uploading ? "animate-pulse" : ""
+                }`}
+              />
             </div>
 
             <div>
               <p className="text-lg font-semibold text-gray-800 mb-2">
-                拖拽图片到此处，或
-                <button
-                  onClick={openFileDialog}
-                  className="text-blue-600 hover:text-blue-700 underline ml-1"
-                >
-                  点击上传
-                </button>
+                {uploading ? (
+                  "正在上传..."
+                ) : (
+                  <>
+                    拖拽图片到此处，或
+                    <button
+                      onClick={openFileDialog}
+                      disabled={uploading}
+                      className="text-blue-600 hover:text-blue-700 underline ml-1"
+                    >
+                      点击上传
+                    </button>
+                  </>
+                )}
               </p>
               <p className="text-sm text-gray-500">
                 支持 JPG、PNG、WEBP 格式，
@@ -178,15 +217,20 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="请输入图片URL地址..."
+              disabled={uploading}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              onKeyPress={(e) => e.key === "Enter" && handleUrlSubmit()}
+              onKeyPress={(e) =>
+                e.key === "Enter" && !uploading && handleUrlSubmit()
+              }
             />
             <button
               onClick={handleUrlSubmit}
-              disabled={!urlInput.trim()}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors duration-200"
+              disabled={!urlInput.trim() || uploading}
+              className={`px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors duration-200 ${
+                uploading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              添加
+              {uploading ? "上传中..." : "添加"}
             </button>
           </div>
           <p className="text-sm text-gray-500 text-center">

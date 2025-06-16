@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaTimes,
   FaSearch,
@@ -8,83 +8,74 @@ import {
   FaCalendarAlt,
   FaImage,
 } from "react-icons/fa";
+import { historyImages, downloadImage } from "../service";
 
 const HistoryModal = ({ isOpen, onClose }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [historyData, setHistoryData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [downloadingIds, setDownloadingIds] = useState(new Set());
 
-  // 模拟历史数据
-  const historyData = [
-    {
-      id: 1,
-      fileName: "家庭合照.jpg",
-      originalSize: "2.3 MB",
-      processedSize: "2.8 MB",
-      status: "completed",
-      date: "2024-01-15 14:30",
-      quality: "高清修复",
-      originalUrl:
-        "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=20",
-      processedUrl:
-        "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: 2,
-      fileName: "毕业照片.png",
-      originalSize: "1.8 MB",
-      processedSize: "2.1 MB",
-      status: "completed",
-      date: "2024-01-14 09:15",
-      quality: "标准修复",
-      originalUrl:
-        "https://images.unsplash.com/photo-1606787366850-de6330128bfc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=20",
-      processedUrl:
-        "https://images.unsplash.com/photo-1606787366850-de6330128bfc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: 3,
-      fileName: "风景照.jpg",
-      originalSize: "3.1 MB",
-      processedSize: "3.5 MB",
-      status: "processing",
-      date: "2024-01-14 16:45",
-      quality: "高清修复",
-      originalUrl:
-        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=20",
-      processedUrl: null,
-    },
-    {
-      id: 4,
-      fileName: "老照片修复.jpg",
-      originalSize: "1.2 MB",
-      processedSize: "1.6 MB",
-      status: "completed",
-      date: "2024-01-13 11:20",
-      quality: "专业修复",
-      originalUrl:
-        "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=20",
-      processedUrl:
-        "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: 5,
-      fileName: "产品图片.png",
-      originalSize: "2.7 MB",
-      processedSize: "3.2 MB",
-      status: "failed",
-      date: "2024-01-12 15:30",
-      quality: "高清修复",
-      originalUrl:
-        "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=20",
-      processedUrl: null,
-    },
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      fetchHistoryData();
+    }
+  }, [isOpen]);
+
+  const fetchHistoryData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await historyImages();
+      if (response.code === "0") {
+        setHistoryData(response.data || []);
+      } else {
+        setError(response.msg || "获取历史记录失败");
+      }
+    } catch (err) {
+      setError("获取历史记录失败");
+      console.error("获取历史记录出错:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async (file_id) => {
+    if (downloadingIds.has(file_id)) return;
+
+    try {
+      setDownloadingIds((prev) => new Set([...prev, file_id]));
+      const response = await downloadImage(file_id);
+
+      // 创建一个下载链接
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `image_${file_id}`); // 你可能需要根据实际情况设置文件名
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("下载失败:", err);
+      // 可以添加一个提示
+      alert("下载失败，请重试");
+    } finally {
+      setDownloadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(file_id);
+        return next;
+      });
+    }
+  };
 
   // 过滤和排序逻辑
   const filteredHistory = historyData
     .filter((item) => {
-      const matchesSearch = item.fileName
+      const matchesSearch = item.filename
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
       const matchesFilter =
@@ -93,11 +84,11 @@ const HistoryModal = ({ isOpen, onClose }) => {
     })
     .sort((a, b) => {
       if (sortBy === "newest") {
-        return new Date(b.date) - new Date(a.date);
+        return new Date(b.created_at) - new Date(a.created_at);
       } else if (sortBy === "oldest") {
-        return new Date(a.date) - new Date(b.date);
+        return new Date(a.created_at) - new Date(b.created_at);
       } else if (sortBy === "name") {
-        return a.fileName.localeCompare(b.fileName);
+        return a.filename.localeCompare(b.filename);
       }
       return 0;
     });
@@ -186,7 +177,29 @@ const HistoryModal = ({ isOpen, onClose }) => {
 
         {/* 列表内容 */}
         <div className="flex-1 overflow-y-auto p-6">
-          {filteredHistory.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 mx-auto mb-4">
+                <div className="w-full h-full border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              </div>
+              <h3 className="text-lg font-medium text-gray-800">加载中...</h3>
+            </div>
+          ) : error ? (
+            <div className="text-center py-20">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaTimes className="text-red-500 text-2xl" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-800 mb-2">
+                {error}
+              </h3>
+              <button
+                onClick={fetchHistoryData}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                重试
+              </button>
+            </div>
+          ) : filteredHistory.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaImage className="text-gray-400 text-2xl" />
@@ -200,44 +213,25 @@ const HistoryModal = ({ isOpen, onClose }) => {
             <div className="space-y-4">
               {filteredHistory.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.file_id}
                   className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow duration-200"
                 >
                   <div className="flex items-center space-x-4">
-                    {/* 预览图 */}
-                    <div className="flex-shrink-0">
-                      <div className="relative">
-                        <img
-                          src={item.originalUrl}
-                          alt={item.fileName}
-                          className="w-16 h-16 object-cover rounded-lg"
-                        />
-                        {item.status === "processing" && (
-                          <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
                     {/* 文件信息 */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="text-lg font-medium text-gray-800 truncate">
-                          {item.fileName}
+                          {item.filename}
                         </h4>
                         {getStatusBadge(item.status)}
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
                         <div className="flex items-center space-x-1">
                           <FaCalendarAlt className="text-gray-400" />
-                          <span>{item.date}</span>
+                          <span>
+                            {new Date(item.created_at).toLocaleString()}
+                          </span>
                         </div>
-                        <div>质量: {item.quality}</div>
-                        <div>原始: {item.originalSize}</div>
-                        {item.processedSize && (
-                          <div>修复后: {item.processedSize}</div>
-                        )}
                       </div>
                     </div>
 
@@ -252,10 +246,22 @@ const HistoryModal = ({ isOpen, onClose }) => {
                             <FaEye className="text-lg" />
                           </button>
                           <button
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                            onClick={() => handleDownload(item.file_id)}
+                            disabled={downloadingIds.has(item.file_id)}
+                            className={`p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200 ${
+                              downloadingIds.has(item.file_id)
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
                             title="下载"
                           >
-                            <FaDownload className="text-lg" />
+                            <FaDownload
+                              className={`text-lg ${
+                                downloadingIds.has(item.file_id)
+                                  ? "animate-bounce"
+                                  : ""
+                              }`}
+                            />
                           </button>
                         </>
                       )}
