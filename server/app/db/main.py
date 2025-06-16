@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import Annotated, AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from sqlalchemy.exc import SQLAlchemyError
-from sqlmodel import SQLModel
+from sqlmodel import Session, SQLModel
 
 from app.db.minio import MinioClient
-from app.db.postgres import pg_engine
+from app.db.postgres import get_db_session, pg_engine
 from app.utils.logger import logger
 
 
@@ -58,3 +58,6 @@ async def init_db(_: FastAPI) -> AsyncGenerator:
         logger.success("PostgreSQL connection closed")
     except Exception as e:
         logger.error(f"Error during cleanup: {e}")
+
+
+SessionDep = Annotated[Session, Depends(get_db_session)]
