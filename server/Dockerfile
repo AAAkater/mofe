@@ -1,31 +1,32 @@
-# 使用官方 Python 镜像作为基础镜像
-FROM python:3.9-slim
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# 设置工作目录
-WORKDIR /app
+WORKDIR /server
 
-# 复制项目文件
-COPY pyproject.toml .
-COPY uv.lock .
-COPY ./app ./app
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-# 安装依赖
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc python3-dev && \
-    pip install --no-cache-dir uv && \
-    uv pip install -r uv.lock && \
-    apt-get remove -y gcc python3-dev && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+# Copy from the cache instead of linking
+ENV UV_LINK_MODE=copy
 
-# 创建日志目录
-RUN mkdir -p /app/logs
+# Install dependencies first for better caching
+# RUN --mount=type=cache,target=/root/.cache/uv \
+#     --mount=type=bind,source=uv.lock,target=uv.lock \
+#     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+#     uv sync --locked --no-install-project --no-install-workspace 
 
-# 暴露 FastAPI 默认端口
-EXPOSE 8000
+# Copy project files
+COPY . /server/
 
-# 设置环境变量
-ENV PYTHONPATH=/app
+# Install the project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked
 
-# 启动命令
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Add venv binaries to PATH
+ENV PATH="/server/.venv/bin:$PATH"
+ENV PYTHONPATH=/server
+
+# Reset entrypoint
+ENTRYPOINT []
+
+# Run FastAPI application with multiple workers
+CMD ["fastapi", "run", "--host", "0.0.0.0", "--workers", "4", "app/main.py"]

@@ -1,44 +1,11 @@
-!.dockerignore
-!.env
-
-# 忽略 Python 缓存文件和虚拟环境
-__pycache__/
-*.py[cod]
-*$py.class
-.python-version
-venv/
-env/
-.venv/
-
-# 忽略日志目录
-logs/
-
-# 忽略本地开发配置文件
-local_settings.py
-settings_local.py
-
-# 忽略测试相关文件
-tests/
-test/
-coverage/
-htmlcov/
-.pytest_cache/
-
-# 忽略 IDE 和编辑器文件
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# 忽略构建和打包文件
-dist/
-build/
-*.egg-info/
-*.egg
-
-# 忽略文档文件
-docs/_build/
-
-# 忽略 Docker 相关文件（除了 Dockerfile）
-docker-compose.override.yml
-docker-compose.prod.yml
+# Python
+__pycache__
+*.pyc
+.mypy_cache
+.coverage
+htmlcov
+.venv
+logs
+ruff.toml
+README.md
+.vscode
