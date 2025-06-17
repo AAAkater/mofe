@@ -1,6 +1,5 @@
 import os
 
-import torch
 import torchvision.transforms as T
 from PIL import Image
 from torch import Tensor
@@ -81,23 +80,21 @@ class LamaDataset(Dataset):
         mask = Image.open(mask_path).convert("L")
 
         # 应用不同的数据变换
-        original_img = self.original_transform(original_img)
-        mask = self.mask_transform(mask)
+        original_img_tensor: Tensor = self.original_transform(original_img)  # type: ignore
+        mask_tensor: Tensor = self.mask_transform(mask)  # type: ignore
 
         # 将掩码二值化（>0.5的值设为1，其余为0）
-        mask = (mask > 0.5).float()
+        mask_tensor = (mask_tensor > 0.5).float()
 
         # 生成破损图像：原始图像 * (1 - 掩码)
         # 注意：这里需要确保mask的形状与original_img匹配
-        # 通过unsqueeze(0)和expand_as来广播mask的形状
-        # mask = mask.expand_as(original_img)
-        corrupted_img = original_img * (1 - mask)
+        corrupted_img_tensor = original_img_tensor * (1 - mask_tensor)
 
         # 返回模型训练所需的三要素：
         # 1. 带缺失区域的破损图像
         # 2. 缺失区域标识掩码（1=缺失，0=保留）
         # 3. 原始完整图像（用于计算损失）
-        return corrupted_img, mask, original_img
+        return corrupted_img_tensor, mask_tensor, original_img_tensor
 
 
 # 使用示例
