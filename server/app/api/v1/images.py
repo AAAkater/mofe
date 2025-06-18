@@ -1,4 +1,5 @@
 import io
+import uuid
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -18,6 +19,7 @@ from app.db.main import SessionDep
 from app.db.minio import minio_client
 from app.models.response import FileItem, ResponseBase
 from app.utils.logger import logger
+from app.utils.model import image_to_image
 
 router = APIRouter(tags=["images"])
 
@@ -57,13 +59,26 @@ async def upload_image(
         )
         logger.success(f"图片存储成功:{db_image.id=} {db_image.filename=}")
 
-        # TODO 图片修复逻辑
-        # background_tasks.add_task()
+        new_image_id = uuid.uuid4()
+
+        def inpainting_image(file_content: bytes, new_image_id: UUID):
+            new_image = image_to_image(file_content)
+            minio_client.upload_file(
+                object_name=str(new_image_id), file_data=new_image
+            )
+
+        # 图片修复
+        background_tasks.add_task(
+            inpainting_image,
+            file_content=content,
+            new_image_id=new_image_id,
+        )
 
         # 将新图片存入pg
         background_tasks.add_task(
             dao_images.create_new_images,
             session=session,
+            new_id=new_image_id,
             filename=f"{datetime.now(timezone.utc)}.{file_extension}",
             image_type="restored",
             original_image_id=db_image.id,
@@ -72,7 +87,7 @@ async def upload_image(
 
         return ResponseBase[FileItem](
             data=FileItem(
-                id=db_image.id,
+                id=new_image_id,
                 filename=db_image.filename,
                 bucket=settings.MINIO_BUCKET_NAME,
             )

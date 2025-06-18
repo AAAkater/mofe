@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from uuid import UUID
 
@@ -20,6 +21,7 @@ def create_new_images(
     *,
     session: Session,
     filename: str,
+    new_id: UUID | None = None,
     image_type: str = "original",
     original_image_id: UUID | None = None,
     restored_at: datetime | None = None,
@@ -39,7 +41,10 @@ def create_new_images(
     Returns:
         Images: 创建的图片记录
     """
+    if new_id is None:
+        new_id = uuid.uuid4()
     image = Images(
+        id=new_id,
         filename=filename,
         image_type=image_type,
         original_image_id=original_image_id,
