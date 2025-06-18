@@ -1,6 +1,6 @@
 .preview-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: white;
   padding: 2rem;
 }
 
@@ -10,31 +10,30 @@
   justify-content: space-between;
   max-width: 1200px;
   margin: 0 auto 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
+  background: #f8f8f8;
+  border-radius: 10px;
   padding: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #e0e0e0;
 }
 
 .back-btn {
-  background: rgba(255, 255, 255, 0.2);
+  background: #000;
   color: white;
   border: none;
   padding: 0.8rem 1.5rem;
-  border-radius: 25px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
   transition: all 0.3s ease;
 }
 
 .back-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #333;
   transform: translateY(-2px);
 }
 
 .preview-header h1 {
-  color: white;
+  color: #000;
   font-size: 1.5rem;
   font-weight: 300;
   margin: 0;
@@ -54,34 +53,34 @@
 
 .mode-toggle {
   display: flex;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 25px;
+  background: #e0e0e0;
+  border-radius: 8px;
   padding: 0.3rem;
 }
 
 .mode-toggle button {
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(0, 0, 0, 0.7);
   border: none;
   padding: 0.6rem 1.2rem;
-  border-radius: 20px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s ease;
 }
 
 .mode-toggle button.active {
-  background: white;
-  color: #667eea;
+  background: #000;
+  color: white;
   font-weight: 500;
 }
 
 .save-btn {
-  background: #4caf50;
+  background: #000;
   color: white;
   border: none;
   padding: 0.8rem 1.5rem;
-  border-radius: 25px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
@@ -89,7 +88,7 @@
 }
 
 .save-btn:hover {
-  background: #45a049;
+  background: #333;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
@@ -103,12 +102,13 @@
 }
 
 .error-message {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 20px;
+  background: #f8f8f8;
+  border-radius: 12px;
   padding: 3rem;
   text-align: center;
   max-width: 500px;
   margin: 0 auto;
+  border: 1px solid #e0e0e0;
 }
 
 .error-message h2 {
@@ -117,22 +117,21 @@
 }
 
 .error-message button {
-  background: #667eea;
+  background: #000;
   color: white;
   border: none;
   padding: 1rem 2rem;
-  border-radius: 25px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
 }
 
 /* 按钮对比模式 */
 .button-comparison {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
+  background: #f8f8f8;
+  border-radius: 12px;
   padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -142,9 +141,9 @@
 .image-container {
   position: relative;
   display: inline-block;
-  border-radius: 15px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
 .image-container img {
@@ -158,22 +157,22 @@
   position: absolute;
   top: 1rem;
   left: 1rem;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   color: white;
   padding: 0.5rem 1rem;
-  border-radius: 20px;
+  border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 500;
 }
 
 .compare-btn {
-  background: white;
-  color: #667eea;
+  background: #000;
+  color: white;
   border: none;
   padding: 1rem 2rem;
   font-size: 1.1rem;
   font-weight: 500;
-  border-radius: 50px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -183,6 +182,7 @@
 .compare-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  background: #333;
 }
 
 .compare-btn:active {
@@ -192,11 +192,10 @@
 
 /* 滑块对比模式 */
 .slider-comparison {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
+  background: #f8f8f8;
+  border-radius: 12px;
   padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #e0e0e0;
   cursor: col-resize;
   display: flex;
   justify-content: center;
@@ -206,9 +205,9 @@
 .comparison-container {
   position: relative;
   display: inline-block;
-  border-radius: 15px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   max-width: 100%;
 }
 
@@ -264,7 +263,7 @@
   left: 50%;
   width: 8px;
   height: 8px;
-  background: #667eea;
+  background: #000;
   border-radius: 50%;
   transform: translate(-50%, -50%);
 }
@@ -281,10 +280,10 @@
 
 .label-original,
 .label-processed {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   color: white;
   padding: 0.5rem 1rem;
-  border-radius: 20px;
+  border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 500;
 }

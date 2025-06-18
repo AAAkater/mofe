@@ -5,42 +5,58 @@ export interface ProcessedImage {
   id: string
 }
 
+const baseURL = 'http://127.0.0.1:8000' // API base URL
+
 export const processImage = async (file: File): Promise<string> => {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    const img = new Image()
+  const formData = new FormData()
+  formData.append('file', file)
 
-    img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-
-      // 绘制原图
-      ctx!.drawImage(img, 0, 0)
-
-      // 获取图像数据
-      const imageData = ctx!.getImageData(0, 0, canvas.width, canvas.height)
-      const pixels = imageData.data
-
-      // 转换为黑白
-      for (let i = 0; i < pixels.length; i += 4) {
-        const gray =
-          pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114
-        pixels[i] = gray // red
-        pixels[i + 1] = gray // green
-        pixels[i + 2] = gray // blue
-      }
-
-      // 放回画布
-      ctx!.putImageData(imageData, 0, 0)
-
-      // 返回处理后的数据URL
-      const processedDataUrl = canvas.toDataURL('image/png')
-      resolve(processedDataUrl)
-    }
-
-    img.src = URL.createObjectURL(file)
+  const uploadResponse = await fetch(`${baseURL}/upload/image`, {
+    method: 'POST',
+    body: formData,
   })
+
+  if (!uploadResponse.ok) {
+    const errorText = await uploadResponse.text()
+    throw new Error(
+      `Image upload failed: ${uploadResponse.status} ${errorText}`
+    )
+  }
+
+  const uploadResult = await uploadResponse.json()
+  const fileId = uploadResult?.data?.id
+
+  if (!fileId) {
+    throw new Error('Failed to get file ID from upload response')
+  }
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    try {
+      const downloadResponse = await fetch(
+        `${baseURL}/download/image?file_id=${fileId}`
+      )
+
+      if (downloadResponse.ok) {
+        const imageBlob = await downloadResponse.blob()
+        if (imageBlob.type.startsWith('image/')) {
+          return URL.createObjectURL(imageBlob)
+        }
+        // If the response is not an image, it might be an error encoded in JSON.
+        // We will continue polling.
+      } else if (downloadResponse.status !== 404) {
+        const errorText = await downloadResponse.text()
+        throw new Error(
+          `Failed to download processed image. Status: ${downloadResponse.status}. Body: ${errorText}`
+        )
+      }
+      // If status is 404, we continue polling.
+    } catch (e) {
+      console.error('Polling failed, retrying...', e)
+    }
+  }
 }
 
 export const generateId = (): string => {
