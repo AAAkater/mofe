@@ -5,6 +5,7 @@ description = "mofe 模型以及后端服务"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "datasets>=3.6.0",
     "fastapi[standard]>=0.115.12",
     "lama",
     "loguru>=0.7.3",
