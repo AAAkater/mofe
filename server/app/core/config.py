@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     )
 
     PROJECT_NAME: str = "mofe"
+    MODEL_NAME: str = "lama"
 
     # MINIO
     MINIO_ROOT_USER: str = ""
