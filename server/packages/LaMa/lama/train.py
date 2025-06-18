@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from lama.data.lama_dataset import LamaDataset
+from lama.data.dataset import LamaDataset
 from lama.model import Lama
 
 

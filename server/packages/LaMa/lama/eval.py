@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 from tqdm import tqdm
 
-from lama.data.lama_dataset import LamaDataset
+from lama.data.dataset import LamaDataset
 from lama.model import Lama
 
 
