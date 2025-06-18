@@ -26,7 +26,14 @@ class Trainer:
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
         # 初始化优化器和损失函数
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        self.optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=learning_rate,
+            betas=(0.9, 0.999),  # 保持默认的动量参数
+            weight_decay=0.01,  # 添加权重衰减(L2正则化)
+            eps=1e-8,  # 更稳定的数值计算
+        )
+
         self.criterion = nn.L1Loss()
 
         # 记录训练损失
@@ -37,23 +44,19 @@ class Trainer:
         self.model.train()
         total_loss = 0
 
-        for corrupted_imgs, masks, original_imgs in tqdm(
+        for model_input, original_img_tensor, original_filename in tqdm(
             self.train_loader, desc="Training"
         ):
             # 将数据移到设备上
-            corrupted_imgs = corrupted_imgs.to(self.device)
-            masks = masks.to(self.device)
-            original_imgs = original_imgs.to(self.device)
-
-            # 将corrupted_imgs和masks拼接作为输入
-            model_input = torch.cat([corrupted_imgs, masks], dim=1)
+            model_input = model_input.to(self.device)
+            original_img_tensor = original_img_tensor.to(self.device)
 
             # 前向传播
             self.optimizer.zero_grad()
             outputs = self.model(model_input)
 
             # 计算损失
-            loss = self.criterion(outputs, original_imgs)
+            loss = self.criterion(outputs, original_img_tensor)
 
             # 反向传播
             loss.backward()
@@ -89,18 +92,19 @@ class Trainer:
 def main():
     # 训练参数
     num_epochs = 100
-    batch_size = 64
+    batch_size = 80
     learning_rate = 2e-4
     save_interval = 10
 
-    original_dir = "/root/autodl-tmp/imagenet100/n01729322"
+    original_dir = "/root/autodl-tmp/imagenet100"
     mask_dir = "/root/autodl-tmp/mask/testing_mask_dataset"
-
+    save_dir = "./checkpoints/4"
     # 创建数据集和数据加载器
     dataset = LamaDataset(
         original_dir=original_dir,
         mask_dir=mask_dir,
         image_size=(256, 256),
+        max_categories=100,
     )
     train_loader = DataLoader(
         dataset,
@@ -125,7 +129,7 @@ def main():
         model=model,
         train_loader=train_loader,
         learning_rate=learning_rate,
-        save_dir="checkpoints",
+        save_dir=save_dir,
     )
 
     # 训练循环

@@ -1,6 +1,7 @@
 import os
 
 import matplotlib.pyplot as plt
+import torch
 import torchvision.transforms as T
 from PIL import Image
 from torch import Tensor
@@ -39,7 +40,7 @@ class LamaDataset(Dataset):
         category_dirs = category_dirs[:max_categories]
 
         # 获取所有原始图片路径 (保留分类子文件夹结构)
-        self.original_files = []
+        self.original_files: list[str] = []
         for category in category_dirs:
             category_path = os.path.join(original_dir, category)
             files = [
@@ -83,10 +84,39 @@ class LamaDataset(Dataset):
         """返回数据集样本数量"""
         return len(self.original_files)
 
+    # def __getitem__(self, idx: int):
+    #     """获取单个样本数据"""
+    #     original_filename = self.original_files[idx]
+    #     # 循环使用掩码图片
+    #     mask_filename = self.mask_files[idx % len(self.mask_files)]
+
+    #     # 加载原始图像（RGB三通道）
+    #     original_path = os.path.join(self.original_dir, original_filename)
+    #     original_img = Image.open(original_path).convert("RGB")
+
+    #     # 加载掩码图像（灰度单通道）
+    #     mask_path = os.path.join(self.mask_dir, mask_filename)
+    #     mask = Image.open(mask_path).convert("L")
+
+    #     # 应用不同的数据变换
+    #     original_img_tensor: Tensor = self.original_transform(original_img)  # type: ignore
+    #     mask_tensor: Tensor = self.mask_transform(mask)  # type: ignore
+
+    #     # 将掩码二值化（>0.5的值设为1，其余为0）
+    #     mask_tensor = (mask_tensor > 0.5).float()
+
+    #     # 生成破损图像：原始图像 * (1 - 掩码)
+    #     # 注意：这里需要确保mask的形状与original_img匹配
+    #     corrupted_img_tensor = original_img_tensor * (1 - mask_tensor)
+
+    #     # 返回模型训练所需的三要素：
+    #     # 1. 带缺失区域的破损图像
+    #     # 2. 缺失区域标识掩码（1=缺失，0=保留）
+    #     # 3. 原始完整图像（用于计算损失）
+    #     return corrupted_img_tensor, mask_tensor, original_img_tensor
+
     def __getitem__(self, idx: int):
-        """获取单个样本数据"""
         original_filename = self.original_files[idx]
-        # 循环使用掩码图片
         mask_filename = self.mask_files[idx % len(self.mask_files)]
 
         # 加载原始图像（RGB三通道）
@@ -97,22 +127,17 @@ class LamaDataset(Dataset):
         mask_path = os.path.join(self.mask_dir, mask_filename)
         mask = Image.open(mask_path).convert("L")
 
-        # 应用不同的数据变换
+        # 应用变换
         original_img_tensor: Tensor = self.original_transform(original_img)  # type: ignore
-        mask_tensor: Tensor = self.mask_transform(mask)  # type: ignore
+        mask_tensor: Tensor = (self.mask_transform(mask) > 0.5).float()  # type: ignore
 
-        # 将掩码二值化（>0.5的值设为1，其余为0）
-        mask_tensor = (mask_tensor > 0.5).float()
+        # 生成破损图像
+        corrupted_img_tensor: Tensor = original_img_tensor * (1 - mask_tensor)
 
-        # 生成破损图像：原始图像 * (1 - 掩码)
-        # 注意：这里需要确保mask的形状与original_img匹配
-        corrupted_img_tensor = original_img_tensor * (1 - mask_tensor)
+        # 拼接为4通道输入 (3通道图像 + 1通道mask)
+        model_input = torch.cat([corrupted_img_tensor, mask_tensor], dim=0)
 
-        # 返回模型训练所需的三要素：
-        # 1. 带缺失区域的破损图像
-        # 2. 缺失区域标识掩码（1=缺失，0=保留）
-        # 3. 原始完整图像（用于计算损失）
-        return corrupted_img_tensor, mask_tensor, original_img_tensor
+        return model_input, original_img_tensor, original_filename
 
 
 def show_dataset():
