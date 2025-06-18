@@ -17,6 +17,7 @@ class Trainer:
         model: nn.Module,
         train_loader: DataLoader,
         val_loader: DataLoader,
+        progress_bar_disenable: bool = True,
         learning_rate: float = 2e-4,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         save_dir: str = "checkpoints",
@@ -24,6 +25,7 @@ class Trainer:
         self.model = model.to(device)
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.progress_bar_enable = progress_bar_disenable
         self.device = device
         self.save_dir = Path(save_dir)
         self.save_dir.mkdir(parents=True, exist_ok=True)
@@ -49,7 +51,9 @@ class Trainer:
         total_loss = 0
 
         for model_input, original_img_tensor in tqdm(
-            self.train_loader, desc="Training"
+            self.train_loader,
+            desc="Training",
+            disable=self.progress_bar_enable,
         ):
             # 将数据移到设备上
             model_input = model_input.to(self.device)
@@ -78,7 +82,9 @@ class Trainer:
 
         with torch.no_grad():
             for model_input, original_img_tensor in tqdm(
-                self.val_loader, desc="Validation"
+                self.val_loader,
+                desc="Validation",
+                disable=self.progress_bar_enable,
             ):
                 # 将数据移到设备上
                 model_input = model_input.to(self.device)
