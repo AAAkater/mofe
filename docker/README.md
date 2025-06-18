@@ -13,5 +13,6 @@ docker build -t mofe-server-test .
 
 ```shell
 cd mofe/docker
+cp .env.example .env
 docker compose -f docker-compose.yaml up -d
 ```
