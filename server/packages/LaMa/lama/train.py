@@ -130,24 +130,32 @@ def main():
 
     # 训练循环
     print(f"Starting training on {trainer.device}")
-    for epoch in range(num_epochs):
-        print(f"\nEpoch {epoch + 1}/{num_epochs}")
+    print("Press Ctrl+C to interrupt training and save checkpoint")
 
-        # 训练一个epoch
-        avg_loss = trainer.train_epoch()
-        trainer.losses.append(avg_loss)
+    try:
+        for epoch in range(num_epochs):
+            print(f"\nEpoch {epoch + 1}/{num_epochs}")
 
-        print(f"Average loss: {avg_loss:.4f}")
+            # 训练一个epoch
+            avg_loss = trainer.train_epoch()
+            trainer.losses.append(avg_loss)
 
-        # 每save_interval个epoch保存一次模型
-        if (epoch + 1) % save_interval == 0:
-            trainer.save_checkpoint(epoch + 1)
-            trainer.plot_losses()
+            print(f"Average loss: {avg_loss:.4f}")
 
-    # 训练结束后保存最终模型和损失曲线
-    trainer.save_checkpoint(num_epochs)
-    trainer.plot_losses()
-    print("Training completed!")
+            # 每save_interval个epoch保存一次模型
+            if (epoch + 1) % save_interval == 0:
+                trainer.save_checkpoint(epoch + 1)
+                trainer.plot_losses()
+
+        # 训练结束后保存最终模型和损失曲线
+        trainer.save_checkpoint(num_epochs)
+        trainer.plot_losses()
+        print("Training completed!")
+
+    except KeyboardInterrupt:
+        print("\n\nTraining interrupted by user.")
+    finally:
+        print("Training completed!")
 
 
 if __name__ == "__main__":
