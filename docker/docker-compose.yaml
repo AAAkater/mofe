@@ -2,7 +2,7 @@ name: mofe
 
 services:
   server:
-    image: mofe-server-test:latest
+    image: mofe-server:latest
     ports:
       - "8000:8000"
     env_file: ./.env
