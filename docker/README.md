@@ -14,5 +14,5 @@ docker build -t mofe-server:latest .
 ```shell
 cd mofe/docker
 cp .env.example .env
-docker compose -f docker-compose.yaml up -d
+docker compose up -d
 ```
