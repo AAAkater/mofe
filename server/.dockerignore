@@ -1,0 +1,11 @@
+# Python
+__pycache__
+*.pyc
+.mypy_cache
+.coverage
+htmlcov
+.venv
+logs
+ruff.toml
+README.md
+.vscode
