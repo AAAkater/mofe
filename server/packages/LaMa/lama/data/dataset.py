@@ -108,39 +108,25 @@ class LamaDataset(Dataset):
 
         return model_input, original_img_tensor, original_filename
 
+    def show_dataset(self, batch_size: int = 64, num_workers: int = 4):
+        dataloader = DataLoader(
+            self,
+            batch_size=batch_size,
+            shuffle=True,
+            num_workers=num_workers,
+            pin_memory=True,
+        )
+        # 使用示例
+        for corrupted_imgs, masks, original_imgs in dataloader:
+            print("Batch shapes:")
+            print(f"{masks.shape=}")
+            print(f"Corrupted images: {corrupted_imgs.shape}")
+            print(f"Original images: {original_imgs.shape}")
+            break
+
 
 class HfDataset(Dataset):
     pass
-
-
-def show_dataset():
-    original_dir = "/root/autodl-tmp/imagenet100"
-    mask_dir = "/root/autodl-tmp/mask/testing_mask_dataset"
-    batch_size = 64
-    num_workers = 4
-
-    # 创建数据集和数据加载器
-    dataset = LamaDataset(
-        original_dir=original_dir,
-        mask_dir=mask_dir,
-        image_size=(256, 256),
-        max_categories=4,
-    )
-
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers,
-        pin_memory=True,
-    )
-    # 使用示例
-    for corrupted_imgs, masks, original_imgs in dataloader:
-        print("Batch shapes:")
-        print(f"{masks.shape=}")
-        print(f"Corrupted images: {corrupted_imgs.shape}")
-        print(f"Original images: {original_imgs.shape}")
-        break
 
 
 def tensor_to_image(tensor: Tensor) -> Image.Image:
