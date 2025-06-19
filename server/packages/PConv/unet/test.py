@@ -1,16 +1,17 @@
+import csv
 import os
 import random
-import torch
+
+import albumentations as A
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from albumentations import LongestMaxSize, Normalize, PadIfNeeded, ToTensorV2
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
-import csv
-import albumentations as A
-from models.unet import UNet
-from utils.data_augmentation import RestorationDataset
-from albumentations import LongestMaxSize, PadIfNeeded, Normalize, ToTensorV2
+from unet.models.unet import UNet
+from unet.utils.data_augmentation import RestorationDataset
 
 
 def add_scratch(img):
@@ -19,7 +20,11 @@ def add_scratch(img):
     for _ in range(random.randint(1, 3)):
         x1, y1 = random.randint(0, w), random.randint(0, h)
         x2, y2 = random.randint(0, w), random.randint(0, h)
-        color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        color = (
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255),
+        )
         thickness = random.randint(1, 3)
         cv2.line(scratch_img, (x1, y1), (x2, y2), color, thickness)
     return scratch_img
@@ -38,7 +43,9 @@ def test():
     # 加载模型
     model = UNet().to(device)
     model.load_state_dict(
-        torch.load("models/unet_final.pth", map_location=device, weights_only=True)
+        torch.load(
+            "models/unet_final.pth", map_location=device, weights_only=True
+        )
     )
     model.eval()
 
@@ -91,7 +98,9 @@ def test():
             original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
 
             # 让 original_img 也做同样的缩放和填充
-            processed = test_transform(image=original_img, degraded=original_img)
+            processed = test_transform(
+                image=original_img, degraded=original_img
+            )
             original_img_resized = denormalize(processed["image"])
 
             # 获取退化图像和目标图像（来自 dataset 的增强）
@@ -116,7 +125,10 @@ def test():
             # 计算指标时用 original_img_resized
             current_psnr = psnr(original_img_resized, restored_np)
             current_ssim = ssim(
-                original_img_resized, restored_np, multichannel=True, channel_axis=2
+                original_img_resized,
+                restored_np,
+                multichannel=True,
+                channel_axis=2,
             )
             current_mae = np.mean(
                 np.abs(
@@ -160,7 +172,9 @@ def test():
     with open("logs/metrics.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Image Name", "PSNR (dB)", "SSIM", "MAE", "L1"])
-        for name, p, s, m, l in zip(all_names, all_psnr, all_ssim, all_mae, all_l1):
+        for name, p, s, m, l in zip(
+            all_names, all_psnr, all_ssim, all_mae, all_l1
+        ):
             writer.writerow([name, p, s, m, l])
 
     # 计算平均指标
@@ -179,7 +193,9 @@ def test():
 
     plt.subplot(1, 4, 1)
     plt.plot(all_psnr, label="PSNR")
-    plt.axhline(avg_psnr, color="r", linestyle="--", label=f"Avg PSNR: {avg_psnr:.2f}")
+    plt.axhline(
+        avg_psnr, color="r", linestyle="--", label=f"Avg PSNR: {avg_psnr:.2f}"
+    )
     plt.title("PSNR Trend Over Images")
     plt.xlabel("Image Index")
     plt.ylabel("PSNR (dB)")
@@ -188,7 +204,9 @@ def test():
 
     plt.subplot(1, 4, 2)
     plt.plot(all_ssim, label="SSIM")
-    plt.axhline(avg_ssim, color="r", linestyle="--", label=f"Avg SSIM: {avg_ssim:.4f}")
+    plt.axhline(
+        avg_ssim, color="r", linestyle="--", label=f"Avg SSIM: {avg_ssim:.4f}"
+    )
     plt.title("SSIM Trend Over Images")
     plt.xlabel("Image Index")
     plt.ylabel("SSIM")
@@ -197,7 +215,9 @@ def test():
 
     plt.subplot(1, 4, 3)
     plt.plot(all_mae, label="MAE")
-    plt.axhline(avg_mae, color="r", linestyle="--", label=f"Avg MAE: {avg_mae:.2f}")
+    plt.axhline(
+        avg_mae, color="r", linestyle="--", label=f"Avg MAE: {avg_mae:.2f}"
+    )
     plt.title("MAE Trend Over Images")
     plt.xlabel("Image Index")
     plt.ylabel("MAE")
@@ -206,7 +226,9 @@ def test():
 
     plt.subplot(1, 4, 4)
     plt.plot(all_l1, label="L1")
-    plt.axhline(avg_l1, color="r", linestyle="--", label=f"Avg L1: {avg_l1:.2f}")
+    plt.axhline(
+        avg_l1, color="r", linestyle="--", label=f"Avg L1: {avg_l1:.2f}"
+    )
     plt.title("L1 Trend Over Images")
     plt.xlabel("Image Index")
     plt.ylabel("L1")

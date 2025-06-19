@@ -1,15 +1,16 @@
+import logging
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-import os
-import logging
-import numpy as np
-from models.unet import UNet
-from utils.data_augmentation import RestorationDataset  # 确保路径正确
-from torch.amp import GradScaler, autocast
-import matplotlib.pyplot as plt
 import torchvision.models as models
+from torch.amp import autocast_mode, grad_scaler
+from torch.utils.data import DataLoader
 from tqdm import tqdm
+from unet.models.unet import UNet
+from unet.utils.data_augmentation import RestorationDataset  # 确保路径正确
 
 # 设置环境变量以减少内存碎片
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -27,7 +28,9 @@ config = {
 
 # 设置日志记录
 logging.basicConfig(
-    filename="logs/training.log", level=logging.INFO, format="%(asctime)s - %(message)s"
+    filename="logs/training.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
 )
 
 
@@ -67,7 +70,7 @@ def train():
     )  # 对抗损失通过判别器引导生成器输出更真实的图像（提升质感）
 
     # 混合精度训练
-    scaler = GradScaler("cuda")
+    scaler = grad_scaler("cuda")
 
     # 损失记录
     loss_history = []
@@ -186,7 +189,9 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         def discriminator_block(in_filters, out_filters, normalization=True):
-            layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)]
+            layers = [
+                nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)
+            ]
             if normalization:
                 layers.append(nn.InstanceNorm2d(out_filters))
             layers.append(nn.LeakyReLU(0.2, inplace=True))
