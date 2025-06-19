@@ -8,7 +8,7 @@ import {
   FaCalendarAlt,
   FaImage,
 } from "react-icons/fa";
-import { historyImages, downloadImage } from "../service";
+// 不再需要后端API，改用localStorage
 
 const HistoryModal = ({ isOpen, onClose }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,6 +18,8 @@ const HistoryModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [downloadingIds, setDownloadingIds] = useState(new Set());
+  const [deletingIds, setDeletingIds] = useState(new Set());
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -29,12 +31,9 @@ const HistoryModal = ({ isOpen, onClose }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await historyImages();
-      if (response.code === "0") {
-        setHistoryData(response.data || []);
-      } else {
-        setError(response.msg || "获取历史记录失败");
-      }
+      // 从localStorage获取历史记录
+      const historyData = JSON.parse(localStorage.getItem('repairHistory') || '[]');
+      setHistoryData(historyData);
     } catch (err) {
       setError("获取历史记录失败");
       console.error("获取历史记录出错:", err);
@@ -48,20 +47,24 @@ const HistoryModal = ({ isOpen, onClose }) => {
 
     try {
       setDownloadingIds((prev) => new Set([...prev, file_id]));
-      const response = await downloadImage(file_id);
+      
+      // 从localStorage获取图片数据
+      const historyData = JSON.parse(localStorage.getItem('repairHistory') || '[]');
+      const item = historyData.find(record => record.file_id === file_id);
+      
+      if (!item || !item.imageData) {
+        throw new Error("图片数据不存在");
+      }
 
-      // 创建一个下载链接
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // 从base64数据创建下载链接
       const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `image_${file_id}`); // 你可能需要根据实际情况设置文件名
+      link.href = item.imageData;
+      link.setAttribute("download", `repaired_${item.filename}`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("下载失败:", err);
-      // 可以添加一个提示
       alert("下载失败，请重试");
     } finally {
       setDownloadingIds((prev) => {
@@ -69,6 +72,40 @@ const HistoryModal = ({ isOpen, onClose }) => {
         next.delete(file_id);
         return next;
       });
+    }
+  };
+
+  const handleDelete = async (file_id) => {
+    if (deletingIds.has(file_id)) return;
+
+    const confirmed = window.confirm("确定要删除这条历史记录吗？");
+    if (!confirmed) return;
+
+    try {
+      setDeletingIds((prev) => new Set([...prev, file_id]));
+      
+      // 从localStorage删除记录
+      const historyData = JSON.parse(localStorage.getItem('repairHistory') || '[]');
+      const updatedHistory = historyData.filter(record => record.file_id !== file_id);
+      localStorage.setItem('repairHistory', JSON.stringify(updatedHistory));
+      
+      // 更新组件状态
+      setHistoryData(updatedHistory);
+    } catch (err) {
+      console.error("删除失败:", err);
+      alert("删除失败，请重试");
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(file_id);
+        return next;
+      });
+    }
+  };
+
+  const handlePreview = (item) => {
+    if (item.status === 'completed' && item.imageData) {
+      setPreviewImage(item);
     }
   };
 
@@ -240,6 +277,7 @@ const HistoryModal = ({ isOpen, onClose }) => {
                       {item.status === "completed" && (
                         <>
                           <button
+                            onClick={() => handlePreview(item)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                             title="预览"
                           >
@@ -266,10 +304,20 @@ const HistoryModal = ({ isOpen, onClose }) => {
                         </>
                       )}
                       <button
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                        onClick={() => handleDelete(item.file_id)}
+                        disabled={deletingIds.has(item.file_id)}
+                        className={`p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 ${
+                          deletingIds.has(item.file_id)
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
                         title="删除"
                       >
-                        <FaTrash className="text-lg" />
+                        <FaTrash 
+                          className={`text-lg ${
+                            deletingIds.has(item.file_id) ? "animate-pulse" : ""
+                          }`} 
+                        />
                       </button>
                     </div>
                   </div>
@@ -309,6 +357,52 @@ const HistoryModal = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* 预览模态框 */}
+      {previewImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60 p-4">
+          <div className="relative bg-white rounded-lg shadow-2xl max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {previewImage.filename}
+              </h3>
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
+              >
+                <FaTimes className="text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4">
+              <img
+                src={previewImage.imageData}
+                alt={previewImage.filename}
+                className="max-w-full max-h-[70vh] object-contain mx-auto"
+              />
+            </div>
+            <div className="flex items-center justify-center p-4 border-t border-gray-200 space-x-4">
+              <button
+                onClick={() => handleDownload(previewImage.file_id)}
+                disabled={downloadingIds.has(previewImage.file_id)}
+                className={`flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 ${
+                  downloadingIds.has(previewImage.file_id)
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                <FaDownload />
+                <span>下载图片</span>
+              </button>
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200"
+              >
+                <span>关闭</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

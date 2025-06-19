@@ -17,6 +17,50 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1,uploadedImages,setUploadedI
 
   const fileInputRef = useRef(null);
 
+  // 保存到历史记录的辅助函数
+  const saveToHistory = (historyItem) => {
+    try {
+      const existingHistory = JSON.parse(localStorage.getItem('repairHistory') || '[]');
+      // 检查是否已存在相同file_id的记录，如果存在则更新
+      const existingIndex = existingHistory.findIndex(item => item.file_id === historyItem.file_id);
+      if (existingIndex !== -1) {
+        existingHistory[existingIndex] = historyItem;
+      } else {
+        existingHistory.unshift(historyItem); // 添加到开头
+      }
+      
+      // 限制历史记录数量，最多保存100条
+      if (existingHistory.length > 100) {
+        existingHistory.splice(100);
+      }
+      
+      // 将imageBlob转换为base64存储
+      if (historyItem.imageBlob) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const historyItemWithBase64 = {
+            ...historyItem,
+            imageData: reader.result,
+          };
+          delete historyItemWithBase64.imageBlob;
+          
+          const updatedHistory = existingIndex !== -1 
+            ? existingHistory.map((item, index) => 
+                index === existingIndex ? historyItemWithBase64 : item
+              )
+            : [historyItemWithBase64, ...existingHistory.slice(1)];
+          
+          localStorage.setItem('repairHistory', JSON.stringify(updatedHistory));
+        };
+        reader.readAsDataURL(new Blob([historyItem.imageBlob]));
+      } else {
+        localStorage.setItem('repairHistory', JSON.stringify(existingHistory));
+      }
+    } catch (error) {
+      console.error('保存历史记录失败:', error);
+    }
+  };
+
   // 轮询检查图片修复状态
   const pollRepairStatus = async (imageId) => {
     try {
@@ -24,6 +68,16 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1,uploadedImages,setUploadedI
       const url = window.URL.createObjectURL(new Blob([response.data]));
       setRepairedImageUrls((prev) => ({ ...prev, [imageId]: url }));
       setRepairStatus((prev) => ({ ...prev, [imageId]: 'completed' }));
+      
+      // 保存到历史记录
+      const historyItem = {
+        file_id: imageId,
+        filename: uploadedImages.find(img => img.id === imageId)?.name || `image_${imageId}`,
+        status: 'completed',
+        created_at: new Date().toISOString(),
+        imageBlob: response.data, // 保存图片数据
+      };
+      saveToHistory(historyItem);
       
       // 清理轮询定时器
       if (pollingIntervals[imageId]) {
@@ -42,6 +96,16 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1,uploadedImages,setUploadedI
       } else {
         // 其他错误，标记为失败
         setRepairStatus((prev) => ({ ...prev, [imageId]: 'failed' }));
+        
+        // 保存失败记录到历史
+        const historyItem = {
+          file_id: imageId,
+          filename: uploadedImages.find(img => img.id === imageId)?.name || `image_${imageId}`,
+          status: 'failed',
+          created_at: new Date().toISOString(),
+        };
+        saveToHistory(historyItem);
+        
         if (pollingIntervals[imageId]) {
           clearInterval(pollingIntervals[imageId]);
           setPollingIntervals((prev) => {
@@ -59,6 +123,15 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1,uploadedImages,setUploadedI
     setRepairStatus((prev) => ({ ...prev, [imageId]: 'processing' }));
     setRetryCount((prev) => ({ ...prev, [imageId]: 0 }));
     
+    // 保存处理中状态到历史记录
+    const historyItem = {
+      file_id: imageId,
+      filename: uploadedImages.find(img => img.id === imageId)?.name || `image_${imageId}`,
+      status: 'processing',
+      created_at: new Date().toISOString(),
+    };
+    saveToHistory(historyItem);
+    
     const intervalId = setInterval(() => {
       pollRepairStatus(imageId);
     }, 2000); // 每2秒检查一次
@@ -75,6 +148,15 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1,uploadedImages,setUploadedI
           return copy;
         });
         setRepairStatus((prev) => ({ ...prev, [imageId]: 'failed' }));
+        
+        // 超时失败也要更新历史记录
+        const timeoutHistoryItem = {
+          file_id: imageId,
+          filename: uploadedImages.find(img => img.id === imageId)?.name || `image_${imageId}`,
+          status: 'failed',
+          created_at: new Date().toISOString(),
+        };
+        saveToHistory(timeoutHistoryItem);
       }
     }, 60000);
   };
