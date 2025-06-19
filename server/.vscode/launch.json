@@ -7,7 +7,7 @@
       "request": "launch",
       "console": "integratedTerminal",
       "module": "fastapi",
-      "args": ["dev", "./app/main.py"],
+      "args": ["dev", "./app/main.py", "--port", "8000"],
       "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.env",
       "env": {
