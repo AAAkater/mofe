@@ -9,7 +9,7 @@ import torchvision.models as models
 from torch.amp import autocast_mode, grad_scaler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from unet.models.unet import UNet
+from unet.model import UNet
 from unet.utils.data_augmentation import RestorationDataset  # 确保路径正确
 
 # 设置环境变量以减少内存碎片

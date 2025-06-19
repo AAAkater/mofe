@@ -1,8 +1,9 @@
-import cv2
 import os
 import random
-import numpy as np
+
 import albumentations as A
+import cv2
+import numpy as np
 from albumentations.pytorch import ToTensorV2
 
 # 数据增强管道
@@ -18,7 +19,9 @@ transform = A.Compose(
         ),
         # 数据增强
         A.HorizontalFlip(p=0.5),
-        A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.05, p=0.6),
+        A.ColorJitter(
+            brightness=0.2, contrast=0.2, saturation=0.2, hue=0.05, p=0.6
+        ),
         A.GaussianBlur(blur_limit=(3, 7), p=0.3),
         A.GridDropout(ratio=0.4, p=0.3),  #  替换 CoarseDropout
         # 标准化和张量转换
@@ -55,7 +58,7 @@ class RestorationDataset:
     def __len__(self):
         return len(self.image_files)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         img_path = self.image_files[idx]
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # BGR -> RGB

@@ -10,7 +10,8 @@ import torch
 from albumentations import LongestMaxSize, Normalize, PadIfNeeded, ToTensorV2
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
-from unet.models.unet import UNet
+from torch import Tensor
+from unet.model import UNet
 from unet.utils.data_augmentation import RestorationDataset
 
 
@@ -30,22 +31,20 @@ def add_scratch(img):
     return scratch_img
 
 
-def denormalize(tensor):
+def denormalize(tensor: Tensor):
     img = tensor.cpu().numpy().transpose(1, 2, 0)
     img = (img * 0.5 + 0.5) * 255
     img = np.clip(img, 0, 255).astype(np.uint8)
     return img
 
 
-def test():
+def test(model_path: str):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # 加载模型
     model = UNet().to(device)
     model.load_state_dict(
-        torch.load(
-            "models/unet_final.pth", map_location=device, weights_only=True
-        )
+        torch.load(model_path, map_location=device, weights_only=True)
     )
     model.eval()
 
@@ -89,7 +88,6 @@ def test():
         img = img.transpose(2, 0, 1)  # HWC -> CHW
         return torch.from_numpy(img).float()
 
-    # ...existing code...
     with torch.no_grad():
         for i in range(len(test_dataset)):
             # 读取原始图像
@@ -142,8 +140,6 @@ def test():
                     - restored_np.astype(np.float32)
                 )
             )
-            # ...existing code...
-
             # 保存指标
             all_psnr.append(current_psnr)
             all_ssim.append(current_ssim)
@@ -243,4 +239,5 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    model_path = "models/unet_final.pth"
+    test(model_path)
