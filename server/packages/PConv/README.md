@@ -1,0 +1,3 @@
+utils/data_augmentation.py为图像处理与增强方法
+logs/下为loss曲线和测试集参数曲线
+test.py测试并画评估指标图
