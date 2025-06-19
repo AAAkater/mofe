@@ -2,7 +2,7 @@ import axios from "axios";
 import { toast } from "sonner";
 
 export const $axios = axios.create({
-  baseURL: "http://127.0.0.1:4523/m1/6582539-6288036-default",
+  baseURL: "http://117.72.32.78:8020/api/v1",
   timeout: 5000,
 });
 
@@ -11,9 +11,9 @@ $axios.interceptors.response.use(
     const code = response.status; // 注意这里使用 response.status 获取 HTTP 状态码
     switch (true) {
       case code >= 200 && code < 300: {
-        if (!response.data.status) {
-          return Promise.reject(new Error(`${response.data.message}`));
-        }
+        // if (!response.data.status) {
+        //   return Promise.reject(new Error(`${response.data.message}`));
+        // }
         return response;
       }
       case code === 400: // Bad Request

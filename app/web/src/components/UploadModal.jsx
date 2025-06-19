@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FaTimes, FaCog, FaDownload } from "react-icons/fa";
 import ImageUploader from "./ImageUploader";
+import { downloadImage } from "../service";
 
 const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
   // mode: 'single' or 'batch'
@@ -8,9 +9,9 @@ const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedImages, setProcessedImages] = useState([]);
 
-  const handleImageUpload = (images) => {
-    setUploadedImages(images);
-  };
+  // const handleImageUpload = (images) => {
+  //   setUploadedImages(images);
+  // };
 
   const handleStartProcessing = () => {
     if (uploadedImages.length === 0) return;
@@ -21,7 +22,7 @@ const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
     setTimeout(() => {
       const processed = uploadedImages.map((img) => ({
         ...img,
-        processedUrl: img.preview || img.url, // 实际项目中这里会是AI处理后的图片URL
+        processedUrl: `/download/image?file_id=${img.id}`, // 使用ID作为processedUrl
         isProcessed: true,
       }));
       setProcessedImages(processed);
@@ -29,9 +30,19 @@ const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
     }, 3000);
   };
 
-  const handleDownload = (image) => {
-    // 实际项目中会下载处理后的图片
-    console.log("下载图片:", image);
+  const handleDownload = async (image) => {
+    try {
+      const response = await downloadImage(image.id);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", image.name);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error("下载图片失败:", error);
+    }
   };
 
   const handleDownloadAll = () => {
@@ -72,15 +83,14 @@ const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
 
         {/* 内容区域 */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          {!isProcessing && processedImages.length === 0 && (
+          {!isProcessing ? (
             <ImageUploader
-              onImageUpload={handleImageUpload}
+              uploadedImages={uploadedImages}
+              setUploadedImages={setUploadedImages}
+              // onImageUpload={handleImageUpload}
               maxFiles={mode === "single" ? 1 : 30}
             />
-          )}
-
-          {/* 处理中状态 */}
-          {isProcessing && (
+          ):(
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-6">
                 <div className="w-full h-full border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
@@ -132,7 +142,7 @@ const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
                       </div>
 
                       {/* 修复后 */}
-                      <div>
+                      {/* <div>
                         <p className="text-sm font-medium text-gray-600 mb-2">
                           修复后
                         </p>
@@ -143,7 +153,7 @@ const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                      </div>
+                      </div> */}
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -166,7 +176,7 @@ const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
         </div>
 
         {/* 底部按钮 */}
-        {uploadedImages.length > 0 &&
+        {/* {uploadedImages.length > 0 &&
           !isProcessing &&
           processedImages.length === 0 && (
             <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
@@ -189,7 +199,7 @@ const UploadModal = ({ isOpen, onClose, mode = "single" }) => {
                 </button>
               </div>
             </div>
-          )}
+          )} */}
       </div>
     </div>
   );

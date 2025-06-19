@@ -1,13 +1,13 @@
 import { useState, useRef } from "react";
 import { FaUpload, FaImage, FaLink, FaTimes } from "react-icons/fa";
-import { uploadImage } from "../service/index.js";
+import { downloadImage, uploadImage } from "../service/index.js";
 
-const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
+const ImageUploader = ({ onImageUpload, maxFiles = 1,uploadedImages,setUploadedImages }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadMode, setUploadMode] = useState("file"); // 'file', 'url'
   const [urlInput, setUrlInput] = useState("");
-  const [uploadedImages, setUploadedImages] = useState([]);
   const [uploading, setUploading] = useState(false);
+
   const fileInputRef = useRef(null);
 
   const handleDrag = (e) => {
@@ -41,21 +41,22 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
     try {
       for (const file of files) {
         const formData = new FormData();
-        formData.append("image", file);
+        formData.append("file", file);
 
         const response = await uploadImage(formData);
-
+        console.log(response)
         const newImage = {
-          id: response.data.file_id,
+          id: response.data.data.id,
           name: file.name,
           size: file.size,
           preview: URL.createObjectURL(file),
-          url: response.data.url,
+          url: response.data.data.id,
+          bucket: response.data.data.bucket,
         };
 
         setUploadedImages((prev) => {
           const updated = [...prev, newImage];
-          onImageUpload && onImageUpload(updated);
+          // onImageUpload && onImageUpload(updated);
           return updated;
         });
       }
@@ -84,19 +85,20 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append("url", urlInput);
+      formData.append("url_file", urlInput);
 
       const response = await uploadImage(formData);
 
       const newImage = {
-        id: response.data.file_id,
+        id: response.data.id,
         name: urlInput.split("/").pop() || "未命名图片",
-        url: response.data.url,
+        url: response.data.id,
+        bucket: response.data.bucket,
       };
 
       setUploadedImages((prev) => {
         const updated = [...prev, newImage];
-        onImageUpload && onImageUpload(updated);
+        // onImageUpload && onImageUpload(updated);
         return updated;
       });
 
@@ -108,14 +110,29 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
     }
   };
 
+  const handleDownload = async (image) => {
+    console.log(image)
+    try {
+      const response = await downloadImage(image.id);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", image.name);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error("下载图片失败:", error);
+    }
+  };
+
   const removeImage = (id) => {
     setUploadedImages((prev) => {
       const updated = prev.filter((img) => img.id !== id);
-      onImageUpload && onImageUpload(updated);
+      // onImageUpload && onImageUpload(updated);
       return updated;
     });
   };
-
   const openFileDialog = () => {
     fileInputRef.current?.click();
   };
@@ -151,9 +168,8 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
           </button>
         </div>
       </div>
-
       {/* 文件上传区域 */}
-      {uploadedImages.length == 0 && uploadMode === "file" && (
+      { uploadMode === "file" && (
         <div
           className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
             dragActive
@@ -211,7 +227,7 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
       )}
 
       {/* URL输入区域 */}
-      {uploadedImages.length == 0 && uploadMode === "url" && (
+      { uploadMode === "url" && (
         <div className="space-y-4">
           <div className="flex space-x-2">
             <input
@@ -249,7 +265,7 @@ const ImageUploader = ({ onImageUpload, maxFiles = 1 }) => {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {uploadedImages.map((image) => (
-              <div key={image.id} className="relative group">
+              <div key={image.id} className="relative group" onClick={()=>handleDownload(image)}>
                 <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                   <img
                     src={image.preview || image.url}

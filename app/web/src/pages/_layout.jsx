@@ -67,9 +67,9 @@ const Layout = () => {
         {isMobile ? (
           <div className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">Mofe</span>
-              </div>
+              {/* <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center"> */}
+                <span className="text-2xl ">✨</span>
+              {/* </div> */}
               <span className="text-xl font-bold text-gray-800">Mofe</span>
             </div>
 

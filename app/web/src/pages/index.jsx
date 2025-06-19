@@ -620,7 +620,7 @@ function Page() {
         <UploadModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          mode="single"
+          mode="batch"
         />
       </div>
     </div>

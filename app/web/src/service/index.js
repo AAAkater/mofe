@@ -5,7 +5,9 @@ export const uploadImage = (data) => {
 };
 
 export const downloadImage = (file_id) => {
-  return $axios.get(`/download/image?file_id=${file_id}`);
+  return $axios.get(`/download/image?file_id=${file_id}`, {
+    responseType: 'blob'
+  });
 };
 
 export const historyImages = () => {
